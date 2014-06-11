@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/dz0ny/arso-potresi.svg?branch=master)](https://travis-ci.org/dz0ny/arso-potresi)
 arso-potresi
 ============
 

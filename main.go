@@ -8,23 +8,21 @@ import (
 	"github.com/martini-contrib/throttle"
 	"github.com/stretchr/hoard"
 	"log"
+	"strconv"
 	"time"
 )
 
 type Potres struct {
-	Magnituda string
-	Lat       string
-	Lon       string
+	Magnituda float64
+	Lat       float64
+	Lon       float64
 	Datum     string
 	Lokacija  string
 }
 
-var (
-	zadnji_request = 0
-	m              *martini.Martini
-)
+var m *martini.Martini
 
-func ScrapeARSO() []Potres {
+func ScrapeARSOPotresi() []Potres {
 
 	var doc *goquery.Document
 	var e error
@@ -37,10 +35,10 @@ func ScrapeARSO() []Potres {
 		magnituda := s.Find("td:nth-child(4)").Text()
 		if magnituda != "" {
 			potres := Potres{}
-			potres.Magnituda = magnituda
+			potres.Magnituda, _ = strconv.ParseFloat(magnituda, 2)
+			potres.Lat, _ = strconv.ParseFloat(s.Find("td:nth-child(2)").Text(), 3)
+			potres.Lon, _ = strconv.ParseFloat(s.Find("td:nth-child(3)").Text(), 3)
 			potres.Lokacija = s.Find("td:nth-child(6)").Text()
-			potres.Lat = s.Find("td:nth-child(2)").Text()
-			potres.Lon = s.Find("td:nth-child(3)").Text()
 			potres.Datum = s.Find("td:nth-child(1)").Text()
 			potresi = append(potresi, potres)
 		}
@@ -49,16 +47,24 @@ func ScrapeARSO() []Potres {
 	return potresi
 }
 
-func GetArso() []Potres {
-	return hoard.Get("my-key", func() (interface{}, *hoard.Expiration) {
-		obj := ScrapeARSO()
+func GetArsoPotresi() []Potres {
+	return hoard.Get("potresi", func() (interface{}, *hoard.Expiration) {
+		obj := ScrapeARSOPotresi()
 		return obj, hoard.Expires().AfterMinutes(2)
 	}).([]Potres)
 }
 
 func main() {
 	m := martini.Classic()
-	m.Use(staticbin.Static("static", Asset))
+	if martini.Env == "production" {
+		// run folowing before deploy
+		// go get github.com/jteeuwen/go-bindata/...
+		// bin/go-bindata static/
+		m.Use(staticbin.Static("static", Asset))
+	} else {
+		m.Use(martini.Static("static"))
+	}
+
 	m.Use(render.Renderer())
 	limits := throttle.Policy(&throttle.Quota{
 		Limit:  100,
@@ -68,7 +74,7 @@ func main() {
 	// Setup routes
 
 	m.Get(`/potresi.json`, limits, func(r render.Render) {
-		r.JSON(200, GetArso())
+		r.JSON(200, GetArsoPotresi())
 	})
 
 	m.Run()
