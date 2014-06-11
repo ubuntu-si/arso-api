@@ -6,6 +6,7 @@ import (
 	"github.com/martini-contrib/render"
 	"github.com/martini-contrib/staticbin"
 	"github.com/martini-contrib/throttle"
+	"github.com/stretchr/hoard"
 	"log"
 	"time"
 )
@@ -48,12 +49,17 @@ func ScrapeARSO() []Potres {
 	return potresi
 }
 
+func GetArso() []Potres {
+	return hoard.Get("my-key", func() (interface{}, *hoard.Expiration) {
+		obj := ScrapeARSO()
+		return obj, hoard.Expires().AfterMinutes(2)
+	}).([]Potres)
+}
+
 func main() {
 	m := martini.Classic()
-	// go-bindata (https://github.com/jteeuwen/go-bindata).
 	m.Use(staticbin.Static("static", Asset))
 	m.Use(render.Renderer())
-
 	limits := throttle.Policy(&throttle.Quota{
 		Limit:  100,
 		Within: time.Hour,
@@ -62,11 +68,7 @@ func main() {
 	// Setup routes
 
 	m.Get(`/potresi.json`, limits, func(r render.Render) {
-		r.JSON(200, ScrapeARSO())
-	})
-
-	m.Get(`/potresi.xml`, limits, func(r render.Render) {
-		r.XML(200, ScrapeARSO())
+		r.JSON(200, GetArso())
 	})
 
 	m.Run()
