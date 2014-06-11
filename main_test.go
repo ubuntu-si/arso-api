@@ -4,10 +4,16 @@ import (
 	"testing"
 )
 
-func TestArso(t *testing.T) {
+func TestArsoPotresi(t *testing.T) {
 	potresi := ScrapeARSOPotresi()
 	for _, potres := range potresi {
-		t.Log("Potres %s - %s %d %d\n", potres.Magnituda, potres.Lokacija, potres.Lat, potres.Lon)
+		t.Log(potres.Magnituda, potres.Lokacija)
 	}
 
+}
+func TestArsoVreme(t *testing.T) {
+	vreme := ScrapeARSOVreme()
+	for _, postaja := range vreme {
+		t.Log(postaja.Title, postaja.Temp, postaja.URL)
+	}
 }
