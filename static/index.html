@@ -37,16 +37,59 @@
               });
           }
 
+          function getCircle(magnitude) {
+            var low = [151, 83, 34];   // color of mag 1.0
+            var high = [5, 69, 54];  // color of mag 6.0 and above
+            var minMag = 1.0;
+            var maxMag = 6.0;
+
+            // fraction represents where the value sits between the min and max
+            var fraction = (Math.min(magnitude, maxMag) - minMag) /
+                (maxMag - minMag);
+
+            var color = interpolateHsl(low, high, fraction);
+
+            return {
+
+                path: google.maps.SymbolPath.CIRCLE,
+                strokeWeight: 0.5,
+                strokeColor: '#fff',
+                fillColor: color,
+                fillOpacity: .4,
+                // while an exponent would technically be correct, quadratic looks nicer
+                scale: magnitude * 10
+
+            };
+          }
+
+          function interpolateHsl(lowHsl, highHsl, fraction) {
+            var color = [];
+            for (var i = 0; i < 3; i++) {
+              // Calculate color based on the fraction.
+              color[i] = (highHsl[i] - lowHsl[i]) * fraction + lowHsl[i];
+            }
+
+            return 'hsl(' + color[0] + ',' + color[1] + '%,' + color[2] + '%)';
+          }
+
           $.get('/potresi.json', function (res) {
             for (var i = res.length - 1; i >= 0; i--) {
+
               var marker = new google.maps.Marker({
                     position: new google.maps.LatLng(res[i].Lat, res[i].Lon),
                     map: map,
-                    title: res[i].Lokacija
-                });
+                    title: res[i].Magnituda + ' @' + res[i].Datum,
+                    animation: google.maps.Animation.DROP,
+                    zIndex: 1000
+              });
+              new google.maps.Marker({
+                    position: new google.maps.LatLng(res[i].Lat, res[i].Lon),
+                    map: map,
+                    icon: getCircle(res[i].Magnituda),
+                    zIndex: Math.floor(res[i].Magnituda)
+              });
               addInfoWindow(marker, res[i].Lokacija, res[i].Magnituda, res[i].Datum)
             };
-            console.log(res);
           })
         })(jQuery);
 
