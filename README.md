@@ -4,6 +4,16 @@ arso-potresi
 
 Arso potresi na zemljevidi in z API-jem. Vir http://www.arso.gov.si/potresi/obvestila%20o%20potresih/aip/
 
+# Gradnja
+
+    https://github.com/moovweb/gvm
+    gvm install 1.2.2
+    gvm use 1.2.2
+    go get -u github.com/gpmgo/gopm
+    gopm get
+    go-bindata static/
+    gopm build
+
 #### JSON
 
     GET http://potresi.herokuapp.com/potresi.json

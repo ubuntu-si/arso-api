@@ -1,8 +1,13 @@
 language: go
 go:
-- '1.2'
+- '1.2.2'
 
 script:
+  - export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+  - go get -u github.com/gpmgo/gopm
+  - gopm get
+  - go-bindata static/
+  - gopm build
   - go test -v
 
 deploy:
