@@ -1,5 +1,0 @@
-{
-	"BuildConstraints": "linux,darwin,windows",
-	"PackageVersion": "1.0",
-	"ConfigVersion": "0.9"
-}
