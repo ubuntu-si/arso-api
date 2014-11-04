@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-martini/martini"
+	"github.com/martini-contrib/gorelic"
 	"github.com/martini-contrib/render"
 	"github.com/martini-contrib/staticbin"
 	"github.com/martini-contrib/throttle"
@@ -11,6 +12,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -24,20 +26,17 @@ type Potres struct {
 	Lokacija  string
 }
 
-type VremeXML struct {
-	XMLName xml.Name `xml:"data"`
-	Postaja Postaja  `xml:"metData"`
-}
-
 type Postaja struct {
-	Title    string  `xml:"domain_longTitle"`
-	Lat      float64 `xml:"domain_lat"`
-	Lon      float64 `xml:"domain_lon"`
-	Altitude int     `xml:"domain_altitude"`
-	Issued   string  `xml:"tsUpdated_RFC822"`
-	Temp     float64 `xml:"t"`
-	RH       float64 `xml:"rh"`
-	Pressure float64 `xml:"p"`
+	XMLName  *xml.Name `xml:"data" json:",omitempty"`
+	Title    string    `xml:"metData>domain_longTitle"`
+	Lat      float64   `xml:"metData>domain_lat"`
+	Lon      float64   `xml:"metData>domain_lon"`
+	Altitude float64   `xml:"metData>domain_altitude"`
+	Issued   string    `xml:"metData>tsUpdated_RFC822"`
+	Temp     float64   `xml:"metData>t"`
+	RH       float64   `xml:"metData>rh" json:",omitempty"`
+	Pressure float64   `xml:"metData>p" json:",omitempty"`
+	Valid    string    `xml:"metData>tsValid_issued_UTC"`
 	URL      string
 	Auto     bool
 }
@@ -78,23 +77,30 @@ func ScrapeARSOVreme() []Postaja {
 	}
 
 	var vreme []Postaja
-	doc.Find("#observe > tbody > tr > td:nth-child(2) > a").Each(func(i int, s *goquery.Selection) {
+	doc.Find("td:nth-child(2) > a").Each(func(i int, s *goquery.Selection) {
 		url, found := s.Attr("href")
 		if found {
 
-			response, err := http.Get("http://meteo.arso.gov.si/" + url)
-			if err != nil {
-				log.Fatal(err)
-			} else {
-				defer response.Body.Close()
-				contents, _ := ioutil.ReadAll(response.Body)
-				var q VremeXML
-				xml.Unmarshal(contents, &q)
-				if q.Postaja.Title != "" && q.Postaja.Temp != 0 {
-					q.Postaja.URL = url
-					q.Postaja.Auto = strings.Contains(url, "observationAms")
-					vreme = append(vreme, q.Postaja)
+			if strings.Contains(url, ".xml") && !strings.Contains(url, "media") && !strings.Contains(url, "_si_") {
+				url = "http://meteo.arso.gov.si/" + url
+				log.Println("Fetch", url)
+				response, err := http.Get(url)
+				if err != nil {
+					log.Fatal(err)
+				} else {
+					defer response.Body.Close()
+					contents, _ := ioutil.ReadAll(response.Body)
+					var q Postaja
+					xml.Unmarshal(contents, &q)
+					if q.Title != "" {
+						q.URL = url
+						q.Auto = strings.Contains(url, "observationAms")
+						vreme = append(vreme, q)
+					}
+					log.Println(q)
 				}
+			} else {
+				log.Println("Skip", url)
 			}
 
 		}
@@ -106,7 +112,7 @@ func ScrapeARSOVreme() []Postaja {
 func GetArsoPotresi() []Potres {
 	return hoard.Get("GetArsoPotresi", func() (interface{}, *hoard.Expiration) {
 		obj := ScrapeARSOPotresi()
-		return obj, hoard.Expires().AfterMinutes(5)
+		return obj, hoard.Expires().AfterMinutes(1)
 	}).([]Potres)
 }
 
@@ -127,10 +133,14 @@ func main() {
 	} else {
 		m.Use(martini.Static("static"))
 	}
-
+	nr := os.Getenv("NEWRELIC")
+	if nr != "" {
+		m.Use(gorelic.Handler)
+		gorelic.InitNewrelicAgent(nr, "wpapi", true)
+	}
 	m.Use(render.Renderer())
 	limits := throttle.Policy(&throttle.Quota{
-		Limit:  100,
+		Limit:  120,
 		Within: time.Hour,
 	})
 
