@@ -27,18 +27,20 @@ type Potres struct {
 }
 
 type Postaja struct {
-	XMLName  *xml.Name `xml:"data" json:",omitempty"`
-	Title    string    `xml:"metData>domain_longTitle"`
-	Lat      float64   `xml:"metData>domain_lat"`
-	Lon      float64   `xml:"metData>domain_lon"`
-	Altitude float64   `xml:"metData>domain_altitude"`
-	Issued   string    `xml:"metData>tsUpdated_RFC822"`
-	Temp     float64   `xml:"metData>t"`
-	RH       float64   `xml:"metData>rh" json:",omitempty"`
-	Pressure float64   `xml:"metData>p" json:",omitempty"`
-	Valid    string    `xml:"metData>tsValid_issued_UTC"`
-	URL      string
-	Auto     bool
+	XMLName       *xml.Name `xml:"data" json:",omitempty"`
+	Title         string    `xml:"metData>domain_longTitle"`
+	Lat           float64   `xml:"metData>domain_lat"`
+	Lon           float64   `xml:"metData>domain_lon"`
+	Altitude      float64   `xml:"metData>domain_altitude"`
+	Issued        string    `xml:"metData>tsUpdated_RFC822"`
+	Temp          float64   `xml:"metData>t"`
+	Wind          float64   `xml:"metData>ff_val" json:",omitempty"`
+	WindDirection string    `xml:"metData>dd_icon" json:",omitempty"`
+	RH            float64   `xml:"metData>rh" json:",omitempty"`
+	Pressure      float64   `xml:"metData>p" json:",omitempty"`
+	Valid         string    `xml:"metData>tsValid_issued_UTC"`
+	URL           string
+	Auto          bool
 }
 
 var m *martini.Martini
@@ -82,6 +84,7 @@ func ScrapeARSOVreme() []Postaja {
 		if found {
 
 			if strings.Contains(url, ".xml") && !strings.Contains(url, "media") && !strings.Contains(url, "_si_") {
+
 				url = "http://meteo.arso.gov.si/" + url
 				log.Println("Fetch", url)
 				response, err := http.Get(url)
@@ -119,7 +122,7 @@ func GetArsoPotresi() []Potres {
 func GetArsoPostaje() []Postaja {
 	return hoard.Get("GetArsoPostaje", func() (interface{}, *hoard.Expiration) {
 		obj := ScrapeARSOVreme()
-		return obj, hoard.Expires().AfterMinutes(30)
+		return obj, hoard.Expires().AfterMinutes(5)
 	}).([]Postaja)
 }
 
@@ -152,6 +155,14 @@ func main() {
 
 	m.Get(`/postaje.json`, limits, func(r render.Render) {
 		r.JSON(200, GetArsoPostaje())
+	})
+
+	m.Get(`/potresi.xml`, limits, func(r render.Render) {
+		r.XML(200, GetArsoPotresi())
+	})
+
+	m.Get(`/postaje.xml`, limits, func(r render.Render) {
+		r.XML(200, GetArsoPostaje())
 	})
 
 	m.Run()
