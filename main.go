@@ -38,6 +38,7 @@ type Postaja struct {
 	WindDirection string    `xml:"metData>dd_icon" json:",omitempty"`
 	RH            float64   `xml:"metData>rh" json:",omitempty"`
 	Pressure      float64   `xml:"metData>p" json:",omitempty"`
+	Sky           string    `xml:"metData>nn_shortText" json:",omitempty"`
 	Valid         string    `xml:"metData>tsValid_issued_UTC"`
 	URL           string
 	Auto          bool
