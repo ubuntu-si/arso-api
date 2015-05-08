@@ -2,13 +2,6 @@ package main
 
 import (
 	"encoding/xml"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/go-martini/martini"
-	"github.com/martini-contrib/gorelic"
-	"github.com/martini-contrib/render"
-	"github.com/martini-contrib/staticbin"
-	"github.com/martini-contrib/throttle"
-	"github.com/stretchr/hoard"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -16,6 +9,13 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/go-martini/martini"
+	"github.com/martini-contrib/gorelic"
+	"github.com/martini-contrib/render"
+	"github.com/martini-contrib/throttle"
+	"github.com/stretchr/hoard"
 )
 
 type Potres struct {
@@ -116,31 +116,24 @@ func ScrapeARSOVreme() []Postaja {
 func GetArsoPotresi() []Potres {
 	return hoard.Get("GetArsoPotresi", func() (interface{}, *hoard.Expiration) {
 		obj := ScrapeARSOPotresi()
-		return obj, hoard.Expires().AfterMinutes(1)
+		return obj, hoard.Expires().AfterMinutesIdle(15)
 	}).([]Potres)
 }
 
 func GetArsoPostaje() []Postaja {
 	return hoard.Get("GetArsoPostaje", func() (interface{}, *hoard.Expiration) {
 		obj := ScrapeARSOVreme()
-		return obj, hoard.Expires().AfterMinutes(5)
+		return obj, hoard.Expires().AfterMinutesIdle(15)
 	}).([]Postaja)
 }
 
 func main() {
 	m := martini.Classic()
-	if martini.Env == "production" {
-		// run folowing before deploy
-		// go get github.com/jteeuwen/go-bindata/...
-		// bin/go-bindata static/
-		m.Use(staticbin.Static("static", Asset))
-	} else {
-		m.Use(martini.Static("static"))
-	}
+	m.Use(martini.Static("static"))
 	nr := os.Getenv("NEWRELIC")
 	if nr != "" {
 		m.Use(gorelic.Handler)
-		gorelic.InitNewrelicAgent(nr, "wpapi", true)
+		gorelic.InitNewrelicAgent(nr, "arso", true)
 	}
 	m.Use(render.Renderer())
 	limits := throttle.Policy(&throttle.Quota{
