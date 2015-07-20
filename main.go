@@ -28,6 +28,7 @@ type Potres struct {
 
 type Postaja struct {
 	XMLName       *xml.Name `xml:"data" json:",omitempty"`
+	Name         string    `xml:"metData>title"`
 	Title         string    `xml:"metData>domain_longTitle"`
 	Lat           float64   `xml:"metData>domain_lat"`
 	Lon           float64   `xml:"metData>domain_lon"`
@@ -96,7 +97,7 @@ func ScrapeARSOVreme() []Postaja {
 					contents, _ := ioutil.ReadAll(response.Body)
 					var q Postaja
 					xml.Unmarshal(contents, &q)
-					if q.Title != "" {
+					if q.Title != "" && !strings.Contains(q.Name, "AAXXauto") {
 						q.URL = url
 						q.Auto = strings.Contains(url, "observationAms")
 						vreme = append(vreme, q)

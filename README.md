@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/dz0ny/arso-potresi.svg?branch=master)](https://travis-ci.org/dz0ny/arso-potresi)
+[![Build Status](https://travis-ci.org/dz0ny/arso-api.svg?branch=master)](https://travis-ci.org/dz0ny/arso-api)
 arso-potresi
 ============
 
@@ -13,7 +13,7 @@ Arso potresi na zemljevidi in z API-jem. Vir http://www.arso.gov.si/potresi/obve
 #### JSON
 
     GET http://potresi.herokuapp.com/potresi.json
-    
+
     [
       {
         "Magnituda": "2.3",
@@ -26,7 +26,7 @@ Arso potresi na zemljevidi in z API-jem. Vir http://www.arso.gov.si/potresi/obve
     ]
 
     GET http://potresi.herokuapp.com/postaje.json
-    
+
     [
       {
         "Title": "Letališče Cerklje ob Krki",

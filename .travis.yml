@@ -11,4 +11,4 @@ deploy:
     secure: eBwQjVebbr3Do6mAHobFjf+GlqXg7HpbPxd/6OW0PP9ICsw5x1bHlo9YHOi9wgL13CP4+bcu509TMkATByM1pyyl0V6po53yE1ONFqB0b11ZNoVZNBzMjC2OrgqYOKly10B2mu53VoZ2v0mXwdi+3xbkeFcZYJfPy8IO8v2e3oY=
   app: potresi
   on:
-    repo: dz0ny/arso-potresi
+    repo: dz0ny/arso-api
