@@ -1,1 +1,1 @@
-web: potresi
+web: arso-api

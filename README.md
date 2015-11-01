@@ -6,9 +6,9 @@ Arso potresi na zemljevidi in z API-jem. Vir http://www.arso.gov.si/potresi/obve
 
 # Gradnja
 
-    glide in
-    go get
-    go-bindata static/
+    gobu
+    godep restore
+    go build .
 
 #### JSON
 
