@@ -6,9 +6,7 @@ Arso potresi na zemljevidi in z API-jem. Vir http://www.arso.gov.si/potresi/obve
 
 # Gradnja
 
-    gobu
-    godep restore
-    go build .
+    env GOPATH=$(pwd) go build arso
 
 #### JSON
 

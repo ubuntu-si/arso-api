@@ -1,1 +1,1 @@
-web: arso-api
+web: bin/arso
