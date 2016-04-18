@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/dz0ny/arso-api.svg?branch=master)](https://travis-ci.org/dz0ny/arso-api)
+[![Build Status](https://travis-ci.org/ubuntu-si/arso-api.svg?branch=master)](https://travis-ci.org/ubuntu-si/arso-api)
 arso-potresi
 ============
 
@@ -10,7 +10,7 @@ Arso potresi na zemljevidi in z API-jem. Vir http://www.arso.gov.si/potresi/obve
 
 #### JSON
 
-    GET http://potresi.herokuapp.com/potresi.json
+    GET http://arso.herokuapp.com/potresi.json
 
     [
       {
@@ -23,7 +23,7 @@ Arso potresi na zemljevidi in z API-jem. Vir http://www.arso.gov.si/potresi/obve
       ...
     ]
 
-    GET http://potresi.herokuapp.com/postaje.json
+    GET http://arso.herokuapp.com/postaje.json
 
     [
       {

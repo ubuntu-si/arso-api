@@ -123,7 +123,7 @@ func ARSOVreme() []Postaja {
 }
 
 func main() {
-	store := cache.NewInMemoryStore(time.Minute * 5)
+	store := cache.NewInMemoryStore(time.Minute)
 	gin.SetMode(gin.ReleaseMode)
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -131,18 +131,19 @@ func main() {
 	}
 
 	m := gin.Default()
+
 	m.Use(static.Serve("/", static.LocalFile("static", true)))
 	// Setup routes
-
-	m.GET(`/potresi.json`, cache.CachePage(store, time.Minute*5, func(c *gin.Context) {
+	m.Use(cache.SiteCache(store, time.Minute*5))
+	m.GET(`/potresi.json`, func(c *gin.Context) {
 		c.JSON(200, ARSOPotresi())
-	}))
+	})
 
-	m.GET(`/postaje.json`, cache.CachePage(store, time.Minute*5, func(c *gin.Context) {
+	m.GET(`/postaje.json`, func(c *gin.Context) {
 		c.JSON(200, ARSOVreme())
-	}))
+	})
 
-	m.GET(`/vreme/:postaja`, cache.CachePage(store, time.Minute*5, func(c *gin.Context) {
+	m.GET(`/vreme/:postaja`, func(c *gin.Context) {
 		name := c.Param("postaja")
 		for _, p := range ARSOVreme() {
 			if name == p.ID {
@@ -151,15 +152,15 @@ func main() {
 			}
 		}
 		c.JSON(404, gin.H{"Status": "Not found: " + name})
-	}))
+	})
 
-	m.GET(`/potresi.xml`, cache.CachePage(store, time.Minute*5, func(c *gin.Context) {
+	m.GET(`/potresi.xml`, func(c *gin.Context) {
 		c.XML(200, ARSOPotresi())
-	}))
+	})
 
-	m.GET(`/postaje.xml`, cache.CachePage(store, time.Minute*5, func(c *gin.Context) {
+	m.GET(`/postaje.xml`, func(c *gin.Context) {
 		c.XML(200, ARSOVreme())
-	}))
+	})
 
 	m.Run(":" + port)
 }
