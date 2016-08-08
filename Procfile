@@ -1,1 +1,1 @@
-web: bin/arso
+web: arso

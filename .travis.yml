@@ -1,7 +1,4 @@
 language: go
-sudo: false
-script:
-  - env GOPATH=$(pwd) go get arso
-  - env GOPATH=$(pwd) go build arso
-  - env GOPATH=$(pwd) go test -v arso
-
+go:
+    - 1.6.3
+script: .travis/make deps sync test

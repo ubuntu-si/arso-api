@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>ARSO on map</title>
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+  <meta charset="utf-8">
+  <style>
+    html,
+    body,
+    #map-canvas {
+      height: 100%;
+      margin: 0px;
+      padding: 0px
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map-canvas"></div>
+  <script src="//maps.googleapis.com/maps/api/js?sensor=false&libraries=weather"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+  <script src="/markerclusterer.js"></script>
+  <script src="/maplabel.js"></script>
+
+  <script>
+    (function($) {
+      var mapOptions = {
+        zoom: 10,
+        center: new google.maps.LatLng(46.055556, 14.508333)
+      };
+
+      var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+      //weatherLayer = new google.maps.weather.WeatherLayer();
+      //weatherLayer.setMap(map);
+
+      function addInfoWindow(marker, lokacija, magnituda, cas) {
+
+        var infoWindow = new google.maps.InfoWindow({
+          content: '<h3>' + lokacija + '</h3>' + '<h3>Magnituda - ' + magnituda + '</h3>' + '<h4>' + cas + '</h4>'
+        });
+
+        google.maps.event.addListener(marker, 'click', function() {
+          infoWindow.open(map, marker);
+        });
+      }
+
+      function getCircle(magnitude) {
+        var low = [144, 85, 41]; // color of mag 1.0
+        var high = [5, 69, 54]; // color of mag 6.0 and above
+        var minMag = 1.0;
+        var maxMag = 6.0;
+
+        // fraction represents where the value sits between the min and max
+        var fraction = (Math.min(magnitude, maxMag) - minMag) /
+          (maxMag - minMag);
+
+        var color = interpolateHsl(low, high, fraction);
+
+        return {
+
+          path: google.maps.SymbolPath.CIRCLE,
+          strokeWeight: 0.5,
+          strokeColor: '#905529',
+          fillColor: color,
+          fillOpacity: .4,
+          // while an exponent would technically be correct, quadratic looks nicer
+          scale: magnitude * 10
+
+        };
+      }
+
+      function interpolateHsl(lowHsl, highHsl, fraction) {
+        var color = [];
+        for (var i = 0; i < 3; i++) {
+          // Calculate color based on the fraction.
+          color[i] = (highHsl[i] - lowHsl[i]) * fraction + lowHsl[i];
+        }
+
+        return 'hsl(' + color[0] + ',' + color[1] + '%,' + color[2] + '%)';
+      }
+
+      $.get('/potresi.json', function(res) {
+        for (var i = res.length - 1; i >= 0; i--) {
+          var rad = new google.maps.Marker({
+            position: new google.maps.LatLng(res[i].Lat, res[i].Lon),
+            map: map,
+            icon: getCircle(res[i].Magnituda),
+          });
+          var l = new MapLabel({
+            text: res[i].Magnituda,
+            position: new google.maps.LatLng(res[i].Lat, res[i].Lon),
+            map: map,
+            fontColor: '#905529',
+            fontSize: 15,
+            align: 'center'
+          });
+          addInfoWindow(rad, res[i].Lokacija, res[i].Magnituda, res[i].Datum)
+        };
+      })
+
+      $.get('/postaje.json', function(res) {
+        var markers = [];
+        for (var i = res.length - 1; i >= 0; i--) {
+          var l = new MapLabel({
+            text: res[i].Temp + '°C',
+            position: new google.maps.LatLng(res[i].Lat, res[i].Lon),
+            map: map,
+            fontSize: 28,
+            fontColor: '#2672E8',
+            align: 'center'
+          });
+          markers.push(l);
+        };
+        var mcOptions = {
+          gridSize: 40,
+          maxZoom: 15,
+          imagePath: 'images/m'
+        };
+
+        var mc = new MarkerClusterer(map, markers, mcOptions);
+      })
+    })(jQuery);
+  </script>
+</body>
+
+</html>
