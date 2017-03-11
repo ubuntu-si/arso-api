@@ -27,6 +27,10 @@ type Potres struct {
 	Lokacija  string
 }
 
+func (p *Potres) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
+}
+
 // Postaja holds info about weather
 type Postaja struct {
 	XMLName       *xml.Name `xml:"data" json:",omitempty"`
@@ -45,6 +49,10 @@ type Postaja struct {
 	Valid         string    `xml:"metData>tsValid_issued_UTC"`
 	URL           string
 	Auto          bool
+}
+
+func (p *Postaja) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
 }
 
 func getMD5Hash(text string) string {

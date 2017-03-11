@@ -1,49 +1,47 @@
-all: deps build
+VERSION := 1.0.0
+APP_NAME := arso
 
-wercker: all test
+all: deps build
 
 deps:
 	go get -u github.com/axw/gocov/gocov
 	go get -u github.com/laher/gols/cmd/...
-	go get -u github.com/kardianos/govendor
+	go get -u github.com/Masterminds/glide
 	go get -u github.com/alecthomas/gometalinter
 	bin/gometalinter --install --update
-	go get -t arso/... # install test packages
+	go get -t $(APP_NAME)/... # install test packages
 
 sync:
-	cd src/arso; govendor sync
+	cd src/$(APP_NAME); glide install
 
-vendor:
-	cd src/arso; govendor update +external
-	git add src/arso/vendor/vendor.json -f
+update:
+	cd src/$(APP_NAME); glide up
 
 clean:
-	rm -f arso
+	rm -f $(APP_NAME)
 	rm -rf pkg
 	rm -rf bin
-	find src/* -maxdepth 0 ! -name 'arso' -type d | xargs rm -rf
-	find src/arso/vendor/* -maxdepth 0 ! -name 'arso' -type d | xargs rm -rf
+	find src/* -maxdepth 0 ! -name '$(APP_NAME)' -type d | xargs rm -rf
+	rm -rf src/$(APP_NAME)/vendor/
 
 build: sync
-	go build --ldflags '-w' arso
+	go build --ldflags '-w -X main.build=$(VERSION)' $(APP_NAME)
 
 lint:
-	bin/gometalinter --fast --disable=gotype --disable=gas --disable=dupl --cyclo-over=30 --deadline=60s --exclude $(shell pwd)/src/arso/vendor src/arso/...
-	find src/arso -not -path "./src/arso/vendor/*" -name '*.go' | xargs gofmt -w -s
+	bin/gometalinter --fast --config=.golinter --cyclo-over=30 --deadline=60s --exclude $(shell pwd)/src/$(APP_NAME)/vendor src/$(APP_NAME)/...
+	find src/$(APP_NAME) -not -path "./src/$(APP_NAME)/vendor/*" -name '*.go' | xargs gofmt -w -s
 
 test: lint cover
-	go test -v -race $(shell go-ls arso/...)
+	go test -v -race $(shell go-ls $(APP_NAME)/...)
+	mv src/arso/main.apib src/arso/static/API.md
 
+snowboard:
+	wget https://github.com/subosito/snowboard/releases/download/vm1.0.0/snowboard-v1.0.0.linux-amd64.tar.gz -O - | tar -xz -C bin
+	chmod +x bin/snowboard
+
+docs:
+	bin/snowboard lint src/arso/static/API.md
+	bin/snowboard html -o src/arso/static/docs.html src/arso/static/API.md
+	
 cover:
-	gocov test $(shell go-ls arso/...) | gocov report
-
-editor:
-	go get -u -v github.com/nsf/gocode
-	go get -u -v github.com/rogpeppe/godef
-	go get -u -v github.com/golang/lint/golint
-	go get -u -v github.com/lukehoban/go-outline
-	go get -u -v sourcegraph.com/sqs/goreturns
-	go get -u -v golang.org/x/tools/cmd/gorename
-	go get -u -v github.com/tpng/gopkgs
-	go get -u -v github.com/newhook/go-symbols
-	go get -u -v golang.org/x/tools/cmd/guru
+	gocov test $(shell go-ls $(APP_NAME)/...) | gocov report

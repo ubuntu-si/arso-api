@@ -1,4 +1,4 @@
 language: go
 go:
-    - 1.6.3
+    - 1.9
 script: .travis/make deps sync test

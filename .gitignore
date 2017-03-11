@@ -24,7 +24,10 @@ _testmain.go
 *.exe
 *.test
 *.prof
-pkg
 bin
-src
-arso
+pkg
+src/arso/vendor
+src/github.com
+src/golang.org
+src/gopkg.in
+src/sourcegraph.com
