@@ -2,16 +2,18 @@ package main
 
 import (
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
-	"path/filepath"
-	"strings"
+
+	_ "arso/statik" // UI
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/docgen"
 	"github.com/go-chi/docgen/raml"
 	"github.com/go-chi/render"
+	"github.com/rakyll/statik/fs"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -19,22 +21,13 @@ var build = ""
 
 // Potresi returs list of locations with tremor info.
 func Potresi(w http.ResponseWriter, r *http.Request) {
-	list := []render.Renderer{}
-	for _, potres := range ARSOPotresi() {
-		list = append(list, &potres)
-	}
 
-	render.RenderList(w, r, list)
+	render.JSON(w, r, ARSOPotresi())
 }
 
 // Postaje returs list of locations with weather info.
 func Postaje(w http.ResponseWriter, r *http.Request) {
-	list := []render.Renderer{}
-	for _, potres := range ARSOVreme() {
-		list = append(list, &potres)
-	}
-
-	render.RenderList(w, r, list)
+	render.JSON(w, r, ARSOVreme())
 }
 
 func setupRoutes(router chi.Router) {
@@ -57,10 +50,8 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	setupRoutes(r)
-	docs(r)
-	workDir, _ := os.Getwd()
-	filesDir := filepath.Join(workDir, "static")
-	FileServer(r, "/static", http.Dir(filesDir))
+	fileServerHandler(r)
+
 	http.ListenAndServe(":"+port, r)
 }
 func docs(router chi.Router) {
@@ -88,20 +79,25 @@ func docs(router chi.Router) {
 
 // FileServer conveniently sets up a http.FileServer handler to serve
 // static files from a http.FileSystem.
-func FileServer(r chi.Router, path string, root http.FileSystem) {
-	if strings.ContainsAny(path, "{}*") {
-		panic("FileServer does not permit URL parameters.")
+func fileServerHandler(r chi.Router) {
+	statikFS, err := fs.New()
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	fs := http.StripPrefix(path, http.FileServer(root))
+	staticHandler := http.FileServer(statikFS)
+	path := "/"
 
 	if path != "/" && path[len(path)-1] != '/' {
 		r.Get(path, http.RedirectHandler(path+"/", 301).ServeHTTP)
 		path += "/"
 	}
 	path += "*"
-
 	r.Get(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fs.ServeHTTP(w, r)
+		staticHandler.ServeHTTP(w, r)
 	}))
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		r.URL.Path = "/"
+		staticHandler.ServeHTTP(w, r)
+	})
 }

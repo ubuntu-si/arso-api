@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/xml"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -27,10 +26,6 @@ type Potres struct {
 	Lokacija  string
 }
 
-func (p *Potres) Render(w http.ResponseWriter, r *http.Request) error {
-	return nil
-}
-
 // Postaja holds info about weather
 type Postaja struct {
 	XMLName       *xml.Name `xml:"data" json:",omitempty"`
@@ -47,12 +42,7 @@ type Postaja struct {
 	Pressure      float64   `xml:"metData>p" json:",omitempty"`
 	Sky           string    `xml:"metData>nn_shortText" json:",omitempty"`
 	Valid         string    `xml:"metData>tsValid_issued_UTC"`
-	URL           string
 	Auto          bool
-}
-
-func (p *Postaja) Render(w http.ResponseWriter, r *http.Request) error {
-	return nil
 }
 
 func getMD5Hash(text string) string {
@@ -122,7 +112,6 @@ func ARSOVreme() []Postaja {
 					xml.Unmarshal(contents, &q)
 					if q.Title != "" {
 						q.ID = getMD5Hash(q.ID)
-						q.URL = fmt.Sprintf("/vreme/%s", q.ID)
 						q.Auto = strings.Contains(url, "observationAms")
 						vreme = append(vreme, q)
 					}

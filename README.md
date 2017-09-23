@@ -3,7 +3,7 @@ arso-api
 ============
 
 Vir: http://www.arso.gov.si/potresi/obvestila%20o%20potresih/aip/
-Dokumentacija: http://arso.herokuapp.com/docs.html#introduction
+Dokumentacija: http://arso.herokuapp.com/static/docs
 
 # Gradnja
 

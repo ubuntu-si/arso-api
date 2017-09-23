@@ -25,6 +25,7 @@ clean:
 	rm -rf src/$(APP_NAME)/vendor/
 
 build: sync
+	cd src/arso; statik -src=./static/
 	go build --ldflags '-w -X main.build=$(VERSION)' $(APP_NAME)
 
 lint:
