@@ -33,15 +33,12 @@ lint:
 
 test: lint cover
 	go test -v -race $(shell go-ls $(APP_NAME)/...)
-	mv src/arso/main.apib src/arso/static/API.md
-
-snowboard:
-	wget https://github.com/subosito/snowboard/releases/download/vm1.0.0/snowboard-v1.0.0.linux-amd64.tar.gz -O - | tar -xz -C bin
-	chmod +x bin/snowboard
 
 docs:
-	bin/snowboard lint src/arso/static/API.md
-	bin/snowboard html -o src/arso/static/docs.html src/arso/static/API.md
+	node_modules/.bin/api-console build api.yaml
+	rm -rf src/arso/static/docs
+	mv build src/arso/static/docs
+	cp api.yaml src/arso/static/docs/
 	
 cover:
 	gocov test $(shell go-ls $(APP_NAME)/...) | gocov report

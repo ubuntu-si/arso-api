@@ -17,17 +17,10 @@ type DocsSuite struct {
 	testServer *test.Server
 }
 
-// For now leave this empty. When needed make sure code
-// extracts variables from request url.
-func Vars(req *http.Request) map[string]string {
-	return make(map[string]string)
-}
-
 func (suite *DocsSuite) SetupSuite() {
 	suite.router = chi.NewRouter()
 	setupRoutes(suite.router)
 
-	test.RegisterURLVarExtractor(Vars)
 	var err error
 	suite.testServer, err = test.NewServer(suite.router)
 	if err != nil {

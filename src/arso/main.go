@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -8,7 +9,10 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/docgen"
+	"github.com/go-chi/docgen/raml"
 	"github.com/go-chi/render"
+	yaml "gopkg.in/yaml.v2"
 )
 
 var build = ""
@@ -53,11 +57,33 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	setupRoutes(r)
-
+	docs(r)
 	workDir, _ := os.Getwd()
 	filesDir := filepath.Join(workDir, "static")
 	FileServer(r, "/static", http.Dir(filesDir))
 	http.ListenAndServe(":"+port, r)
+}
+func docs(router chi.Router) {
+	ramlDocs := &raml.RAML{
+		Title:     "ARSO API",
+		BaseUri:   "https://arso.herokuapp.com",
+		Version:   "v1.0",
+		MediaType: "application/json",
+	}
+
+	chi.Walk(router, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+		handlerInfo := docgen.GetFuncInfo(handler)
+		resource := &raml.Resource{
+			Description: handlerInfo.Comment,
+		}
+
+		return ramlDocs.Add(method, route, resource)
+	})
+
+	dr, _ := yaml.Marshal(ramlDocs)
+	header := []byte("#%RAML 1.0\n---\n")
+	doc := append(header, dr...)
+	ioutil.WriteFile("api.yaml", doc, 0644)
 }
 
 // FileServer conveniently sets up a http.FileServer handler to serve
