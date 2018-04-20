@@ -1,45 +1,80 @@
-VERSION := 1.0.0
-APP_NAME := arso
+VERSION := 0.0.1
+PKG := arso
+COMMIT := $(shell git rev-parse HEAD)
+BUILD_TIME := $(shell date -u +%FT%T)
+BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+CURRENT_TARGET = $(PKG)-$(shell uname -s)-$(shell uname -m)
+TARGETS := Linux-amd64-x86_64
 
-all: deps build
+os = $(word 1, $(subst -, ,$@))
+arch = $(word 3, $(subst -, ,$@))
+goarch = $(word 2, $(subst -, ,$@))
+goos = $(shell echo $(os) | tr A-Z a-z)
+output = $(PKG)-$(os)-$(arch)
+version_flags = -X $(PKG)/version.Version=$(VERSION) \
+ -X $(PKG)/version.CommitHash=${COMMIT} \
+ -X $(PKG)/version.Branch=${BRANCH} \
+ -X $(PKG)/version.BuildTime=${BUILD_TIME}
 
-deps:
+.PHONY: $(TARGETS)
+$(TARGETS):
+	env GOOS=$(goos) GOARCH=$(goarch) go build --ldflags '-s -w $(version_flags)' -o $(output) $(PKG)
+
+#
+# Build all defined targets
+#
+.PHONY: build
+build: $(TARGETS)
+
+#
+# Install app for current system
+#
+install: build
+	sudo mv $(CURRENT_TARGET) /usr/local/bin/$(PKG)
+
+#
+# Install locked dependecies
+#
+sync: bin/dep
+	cd src/$(PKG); dep ensure
+
+#
+# Update all locked dependecies
+#
+update: bin/dep
+	cd src/$(PKG); dep ensure -update
+
+bin/dep:
+	go get -u github.com/golang/dep/cmd/dep
+
+bin/github-release:
+	go get github.com/aktau/github-release
+
+bin/gocov:
 	go get -u github.com/axw/gocov/gocov
-	go get -u github.com/laher/gols/cmd/...
-	go get -u github.com/Masterminds/glide
+
+bin/gometalinter:
 	go get -u github.com/alecthomas/gometalinter
 	bin/gometalinter --install --update
-	go get -t $(APP_NAME)/... # install test packages
 
-sync:
-	cd src/$(APP_NAME); glide install
-
-update:
-	cd src/$(APP_NAME); glide up
+deps:
+	go get -u github.com/laher/gols/cmd/...
 
 clean:
-	rm -f $(APP_NAME)
+	rm -f $(PKG)
 	rm -rf pkg
 	rm -rf bin
-	find src/* -maxdepth 0 ! -name '$(APP_NAME)' -type d | xargs rm -rf
-	rm -rf src/$(APP_NAME)/vendor/
+	find src/* -maxdepth 0 ! -name '$(PKG)' -type d | xargs rm -rf
+	rm -rf src/$(PKG)/vendor/
+	 
+lint: bin/gometalinter
+	bin/gometalinter --fast --disable=gotype --disable=gosimple --disable=ineffassign --disable=dupl --disable=gas --cyclo-over=30 --deadline=60s --exclude $(shell pwd)/src/$(PKG)/vendor src/$(PKG)/...
+	find src/$(PKG) -not -path "./src/$(PKG)/vendor/*" -name '*.go' | xargs gofmt -w -s
 
-build: sync
-	cd src/arso; statik -src=./static/
-	go build --ldflags '-w -X main.build=$(VERSION)' $(APP_NAME)
+test: deps
+	go test -v -race $(shell go-ls $(PKG)/...)
 
-lint:
-	bin/gometalinter --fast --config=.golinter --cyclo-over=30 --deadline=60s --exclude $(shell pwd)/src/$(APP_NAME)/vendor src/$(APP_NAME)/...
-	find src/$(APP_NAME) -not -path "./src/$(APP_NAME)/vendor/*" -name '*.go' | xargs gofmt -w -s
+cover: bin/gocov
+	gocov test $(shell go-ls $(PKG)/...) | gocov report
 
-test: lint cover
-	go test -v -race $(shell go-ls $(APP_NAME)/...)
-
-docs:
-	node_modules/.bin/api-console build api.yaml
-	rm -rf src/arso/static/docs
-	mv build src/arso/static/docs
-	cp api.yaml src/arso/static/docs/
-	
-cover:
-	gocov test $(shell go-ls $(APP_NAME)/...) | gocov report
+all: sync deps build test cover

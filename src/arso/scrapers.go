@@ -1,6 +1,7 @@
 package main
 
 import (
+	"arso/model"
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/xml"
@@ -17,34 +18,6 @@ import (
 
 var cacheArso = cache.New(5*time.Minute, 30*time.Second)
 
-// Potres holds info about earthquake
-type Potres struct {
-	Magnituda float64
-	Lat       float64
-	Lon       float64
-	Datum     string
-	Lokacija  string
-}
-
-// Postaja holds info about weather
-type Postaja struct {
-	XMLName       *xml.Name `xml:"data" json:",omitempty"`
-	ID            string    `xml:"metData>domain_meteosiId"`
-	Title         string    `xml:"metData>domain_longTitle"`
-	Lat           float64   `xml:"metData>domain_lat"`
-	Lon           float64   `xml:"metData>domain_lon"`
-	Altitude      float64   `xml:"metData>domain_altitude"`
-	Issued        string    `xml:"metData>tsUpdated_RFC822"`
-	Temp          float64   `xml:"metData>t"`
-	Wind          float64   `xml:"metData>ff_val" json:",omitempty"`
-	WindDirection string    `xml:"metData>dd_icon" json:",omitempty"`
-	RH            float64   `xml:"metData>rh" json:",omitempty"`
-	Pressure      float64   `xml:"metData>p" json:",omitempty"`
-	Sky           string    `xml:"metData>nn_shortText" json:",omitempty"`
-	Valid         string    `xml:"metData>tsValid_issued_UTC"`
-	Auto          bool
-}
-
 func getMD5Hash(text string) string {
 	hasher := md5.New()
 	hasher.Write([]byte(text))
@@ -52,13 +25,13 @@ func getMD5Hash(text string) string {
 }
 
 // ARSOPotresi returs slice of Potres struct
-func ARSOPotresi() []Potres {
-	var potresi []Potres
+func ARSOPotresi() []model.Potres {
+	var potresi []model.Potres
 	var doc *goquery.Document
 	var e error
 
 	if res, found := cacheArso.Get("potresi"); found {
-		return res.([]Potres)
+		return res.([]model.Potres)
 	}
 
 	if doc, e = goquery.NewDocument("http://www.arso.gov.si/potresi/obvestila%20o%20potresih/aip/"); e != nil {
@@ -68,7 +41,7 @@ func ARSOPotresi() []Potres {
 	doc.Find("#glavna td.vsebina table tr").Each(func(i int, s *goquery.Selection) {
 		magnituda, err := strconv.ParseFloat(s.Find("td:nth-child(4)").Text(), 2)
 		if magnituda > 0 && err == nil {
-			potres := Potres{}
+			potres := model.Potres{}
 			potres.Magnituda = magnituda
 			potres.Lat, _ = strconv.ParseFloat(s.Find("td:nth-child(2)").Text(), 3)
 			potres.Lon, _ = strconv.ParseFloat(s.Find("td:nth-child(3)").Text(), 3)
@@ -82,13 +55,13 @@ func ARSOPotresi() []Potres {
 }
 
 // ARSOVreme returs slice of Postaje struct
-func ARSOVreme() []Postaja {
-	var vreme []Postaja
+func ARSOVreme() []model.Postaja {
+	var vreme []model.Postaja
 	var doc *goquery.Document
 	var e error
 
 	if res, found := cacheArso.Get("vreme"); found {
-		return res.([]Postaja)
+		return res.([]model.Postaja)
 	}
 
 	if doc, e = goquery.NewDocument("http://meteo.arso.gov.si/uploads/probase/www/observ/surface/text/sl/observation_si/index.html"); e != nil {
@@ -108,7 +81,7 @@ func ARSOVreme() []Postaja {
 				} else {
 					defer response.Body.Close()
 					contents, _ := ioutil.ReadAll(response.Body)
-					var q Postaja
+					var q model.Postaja
 					xml.Unmarshal(contents, &q)
 					if q.Title != "" {
 						q.ID = getMD5Hash(q.ID)

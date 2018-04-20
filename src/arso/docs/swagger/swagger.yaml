@@ -1,0 +1,78 @@
+basePath: /
+definitions:
+  model.Postaja:
+    properties:
+      Altitude:
+        type: number
+      Auto:
+        type: boolean
+      ID:
+        type: string
+      Issued:
+        type: string
+      Lat:
+        type: number
+      Lon:
+        type: number
+      Pressure:
+        type: number
+      RH:
+        type: number
+      Sky:
+        type: string
+      Temp:
+        type: number
+      Title:
+        type: string
+      Valid:
+        type: string
+      Wind:
+        type: number
+      WindDirection:
+        type: string
+    type: object
+  model.Potres:
+    properties:
+      Datum:
+        type: string
+      Lat:
+        type: number
+      Lokacija:
+        type: string
+      Lon:
+        type: number
+      Magnituda:
+        type: number
+    type: object
+info:
+  contact: {}
+  description: This is a ARSO JSON API.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: ARSO API
+  version: "1.0"
+paths:
+  /postaje.json:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Postaja'
+            type: object
+      summary: Show weather info
+  /potresi.json:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Potres'
+            type: object
+      summary: Show tremor data
+swagger: "2.0"

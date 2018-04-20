@@ -1,4 +1,4 @@
 language: go
 go:
-    - 1.9
-script: .travis/make deps sync test
+    - "1.10.1"
+script: .travis/make all

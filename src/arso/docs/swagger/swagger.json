@@ -1,0 +1,119 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a ARSO JSON API.",
+        "title": "ARSO API",
+        "contact": {},
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "basePath": "/",
+    "paths": {
+        "/postaje.json": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Show weather info",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/model.Postaja"
+                        }
+                    }
+                }
+            }
+        },
+        "/potresi.json": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Show tremor data",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/model.Potres"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "model.Postaja": {
+            "type": "object",
+            "properties": {
+                "Altitude": {
+                    "type": "number"
+                },
+                "Auto": {
+                    "type": "boolean"
+                },
+                "ID": {
+                    "type": "string"
+                },
+                "Issued": {
+                    "type": "string"
+                },
+                "Lat": {
+                    "type": "number"
+                },
+                "Lon": {
+                    "type": "number"
+                },
+                "Pressure": {
+                    "type": "number"
+                },
+                "RH": {
+                    "type": "number"
+                },
+                "Sky": {
+                    "type": "string"
+                },
+                "Temp": {
+                    "type": "number"
+                },
+                "Title": {
+                    "type": "string"
+                },
+                "Valid": {
+                    "type": "string"
+                },
+                "Wind": {
+                    "type": "number"
+                },
+                "WindDirection": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Potres": {
+            "type": "object",
+            "properties": {
+                "Datum": {
+                    "type": "string"
+                },
+                "Lat": {
+                    "type": "number"
+                },
+                "Lokacija": {
+                    "type": "string"
+                },
+                "Lon": {
+                    "type": "number"
+                },
+                "Magnituda": {
+                    "type": "number"
+                }
+            }
+        }
+    }
+}
